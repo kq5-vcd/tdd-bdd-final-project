@@ -150,9 +150,11 @@ class TestProductModel(unittest.TestCase):
         """It should Delete a Product"""
         product = ProductFactory()
         product.create()
+        print(Product.all())
         self.assertEqual(len(Product.all()), 1)
 
         product.delete()
+        print(Product.all())
         self.assertEqual(len(Product.all()), 0)
 
     def test_list_all_products(self):
@@ -219,3 +221,66 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(found.count(), count)
         for product in found:
             self.assertEqual(product.price, price)
+
+        price_str = str(price) + ' "'
+        found_str = Product.find_by_price(price_str)
+        self.assertEqual(found_str.count(), count)
+        for product in found_str:
+            self.assertEqual(product.price, price)
+
+    def test_serialize_a_product(self):
+        """It should Serialize a Product"""
+        product = ProductFactory()
+        product.create()
+        self.assertEqual(len(Product.all()), 1)
+
+        product_dict = {
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "price": str(product.price),
+            "available": product.available,
+            "category": product.category.name
+        }
+        returned_product_dict = product.serialize()
+        self.assertDictEqual(returned_product_dict, product_dict)
+
+        with self.assertRaises(DataValidationError) as context:
+            mock_dict = 1
+            product = product.deserialize(mock_dict)
+        self.assertIn("Invalid product: body of request contained bad or no data ", str(context.exception))
+
+        with self.assertRaises(DataValidationError) as context:
+            mock_dict = {
+                "id": product.id,
+                "name": product.name,
+                "description": product.description,
+                "price": str(product.price),
+                "available": product.available,
+                "category": "INVALID_CATEGORY"
+            }
+            product = product.deserialize(mock_dict)
+        self.assertIn("Invalid attribute: ", str(context.exception))
+
+        with self.assertRaises(DataValidationError) as context:
+            mock_dict = {
+                "id": product.id,
+                "name": product.name,
+                "description": product.description,
+                "price": str(product.price),
+                "available": 'true',
+                "category": product.category.name
+            }
+            product.deserialize(mock_dict)
+        self.assertIn("Invalid type for boolean [available]: ", str(context.exception))
+
+        with self.assertRaises(DataValidationError) as context:
+            mock_dict = {
+                "id": product.id,
+                "name": product.name,
+                "description": product.description,
+                "price": str(product.price),
+                "category": product.category.name
+            }
+            product.deserialize(mock_dict)
+        self.assertIn("Invalid product: missing ", str(context.exception))
