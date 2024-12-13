@@ -14,9 +14,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Selenium
-        run: |
-          apt-get install -y sqlite3 ca-certificates chromium-driver python3-selenium
+      # - name: Install Selenium
+      #   run: |
+      #     apt-get install -y sqlite3 ca-certificates chromium-driver python3-selenium
 
       - name: Install dependencies
         run: |
